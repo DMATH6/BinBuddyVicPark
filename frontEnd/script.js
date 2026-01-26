@@ -1,54 +1,96 @@
-const input = document.getElementById("textInput");
-const suggestionsBox = document.getElementById("suggestions");
-const binGroupDiv = document.getElementById("binGroup");
+const textInput = document.getElementById('textInput');
+const suggestionsDiv = document.getElementById('suggestions');
+const binGroupDiv = document.getElementById('binGroup');
+const binImageDiv = document.getElementById('binImage');
+const sendBtn = document.getElementById('sendBtn');
 
-// ---------- Autocomplete ----------
-input.addEventListener("input", async () => {
-  const value = input.value;
 
-  if (value.length < 2) {
-    suggestionsBox.innerHTML = "";
-    return;
-  }
+textInput.addEventListener('input', async () => {
+  const query = textInput.value.trim();
+  suggestionsDiv.innerHTML = '';
+  binGroupDiv.innerHTML = '';
+  binImageDiv.innerHTML = '';
+
+  if (!query) return;
 
   try {
-    const response = await fetch(
-      `http://localhost:3000/api/suggest?q=${encodeURIComponent(value)}`
-    );
-    const suggestions = await response.json();
+    const res = await fetch(`/api/suggest?q=${encodeURIComponent(query)}`);
+    const suggestions = await res.json();
 
-    console.log("SUGGESTIONS RECEIVED:", suggestions);
+    suggestions.forEach(suggestion => {
+      const div = document.createElement('div');
+      div.classList.add('suggestion');
+      div.textContent = suggestion.address;
 
-    suggestionsBox.innerHTML = "";
+    
+      div.addEventListener('click', () => {
+        textInput.value = suggestion.address;
 
-    suggestions.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "suggestion";
-      div.textContent = item.address;
+        const month = getCurrentMonth();
+        binGroupDiv.textContent = `Bin Group: ${suggestion.binGroup} (${month})`;
 
-      div.addEventListener("click", () => {
-        input.value = item.address;
-        suggestionsBox.innerHTML = "";
+    
+        binImageDiv.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = getBinImagePath(suggestion.binGroup);
+        img.alt = `Group ${suggestion.binGroup} - ${month}`;
+        img.classList.add('binImage');
 
-        // Display bin group safely
-        binGroupDiv.textContent = "Bin Group: " + (item.binGroup ?? "Unknown");
+        img.onerror = () => {
+          console.error('Image not found:', img.src);
+          img.src = '/images/fallback.png';
+        };
+
+        binImageDiv.appendChild(img);
+        suggestionsDiv.innerHTML = '';
       });
 
-      suggestionsBox.appendChild(div);
+      suggestionsDiv.appendChild(div);
     });
+
   } catch (err) {
-    console.error("Autocomplete error:", err);
+    console.error('Error fetching suggestions:', err);
   }
 });
 
-// ---------- Optional: Echo button ----------
-document.getElementById("sendBtn").addEventListener("click", async () => {
-  const text = input.value;
-  const response = await fetch("http://localhost:3000/api/echo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text })
-  });
-  const data = await response.json();
-  alert("Exact match found? " + data.found);
+div.addEventListener('click', () => {
+  textInput.value = suggestion.address;
+  const month = getCurrentMonth();
+  binGroupDiv.textContent = `Bin Group: ${suggestion.binGroup} (${month})`;
+
+
+  binImageDiv.innerHTML = '';
+
+  const img = document.createElement('img');
+  img.src = getBinImagePath(suggestion.binGroup);
+  img.alt = `Group ${suggestion.binGroup} - ${month}`;
+  img.classList.add('binImage');
+
+
+  img.onerror = () => {
+    console.error('Image not found:', img.src);
+    img.src = '/images/fallback.png';
+  };
+
+  binImageDiv.appendChild(img);
 });
+
+
+
+function getCurrentMonth() {
+  const month = new Date().toLocaleString('default', { month: 'long' });
+  return month.charAt(0).toUpperCase() + month.slice(1); // e.g., "March"
+}
+
+
+function getBinImagePath(binGroup) {
+  const month = getCurrentMonth();
+  const folder = binGroup === '1' || binGroup === 1
+    ? 'group1Cal'
+    : 'group2Cal';
+
+  
+  return `/images/${folder}/${month}.jpg`;
+}
+
+
