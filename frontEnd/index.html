@@ -7,9 +7,14 @@
     </head>
 
     <body>
-        <input id="textInput" placeholder="Type something" />
-        <button id="sendBtn">Send to server</button>
 
+        <div style="position: relative; width: 300px;">
+            <input id="textInput" type="text" autocomplete="off" placeholder="Start typing address..." />
+            <div id="suggestions"></div>
+        </div>
+
+        <div id="binGroup" style="margin-top:10px;font-weight:bold;"></div>
+        <button id="sendBtn">Send to server</button>
 
         <script src="script.js"></script>
     </body>
